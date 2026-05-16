@@ -1,4 +1,4 @@
-# Code Migration Assistant - Default Configuration
+# ShiftIQ - Default Configuration
 # Values here override the base internal defaults, but can be
 # overridden by environment variables (e.g. MIGRATION_SECURITY__LEVEL)
 

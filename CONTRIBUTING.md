@@ -31,11 +31,11 @@ Thank you for your interest in contributing! This guide covers everything you ne
 
 ```bash
 # 1. Fork the repository on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/code-migration-assistant.git
-cd code-migration-assistant
+git clone https://github.com/YOUR_USERNAME/shiftIQ.git
+cd shiftIQ
 
 # 2. Add upstream remote
-git remote add upstream https://github.com/anudeepsrib/code-migration-assistant.git
+git remote add upstream https://github.com/Anudeepsrib/shiftIQ.git
 
 # 3. Create a virtual environment
 python -m venv .venv
@@ -436,8 +436,8 @@ We are committed to a welcoming, inclusive environment. Be respectful, construct
 
 ### Getting Help
 
-- **Questions:** Open a [GitHub Discussion](https://github.com/anudeepsrib/code-migration-assistant/discussions)
-- **Bugs:** Open a [GitHub Issue](https://github.com/anudeepsrib/code-migration-assistant/issues)
+- **Questions:** Open a [GitHub Discussion](https://github.com/Anudeepsrib/shiftIQ/discussions)
+- **Bugs:** Open a [GitHub Issue](https://github.com/Anudeepsrib/shiftIQ/issues)
 - **Security:** See [Reporting Vulnerabilities](docs/security/SECURITY.md#reporting-vulnerabilities)
 
 ### Recognition

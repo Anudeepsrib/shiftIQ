@@ -1,11 +1,13 @@
 """
-Audit reporting for compliance.
+Audit reporting for compliance-oriented checks.
 
-Generates comprehensive audit reports:
-- SOC2 compliance reports
-- GDPR compliance reports
-- HIPAA compliance reports
+Generates heuristic audit reports for development use (pattern-based, not certified):
+- SOC2-oriented controls reports (heuristic)
+- GDPR-oriented pattern reports (heuristic)
+- HIPAA-oriented pattern reports (heuristic)
 - Security audit trails
+
+These are NOT substitutes for formal compliance audits, certifications, or legal review.
 """
 
 import json
@@ -58,14 +60,19 @@ class AuditReporter:
         end_date: datetime = None
     ) -> Dict:
         """
-        Generate SOC2 compliance report.
+        Generate SOC2-oriented controls audit report (heuristic).
+        
+        This is a development-time heuristic report based on audit event logs and
+        internal controls. It is NOT a formal SOC2 Type I/II certification, assessment,
+        or attestation. Use only for internal review; engage qualified auditors for
+        official reports.
         
         Args:
             start_date: Report start date
             end_date: Report end date
             
         Returns:
-            SOC2 compliance report
+            Heuristic SOC2-oriented audit report (not a certification or attestation)
         """
         if end_date is None:
             end_date = datetime.now(timezone.utc)
@@ -98,7 +105,7 @@ class AuditReporter:
                 'end': end_date.isoformat()
             },
             'organization': {
-                'name': 'Code Migration Assistant',
+                'name': 'ShiftIQ',
                 'description': 'Enterprise code migration tool'
             },
             'trust_services_criteria': soc2_criteria,
@@ -116,14 +123,19 @@ class AuditReporter:
         end_date: datetime = None
     ) -> Dict:
         """
-        Generate GDPR compliance report.
+        Generate GDPR-oriented pattern audit report (heuristic).
+        
+        This is a development-time heuristic report based on PII pattern counts and
+        audit events. It is NOT a formal GDPR compliance assessment, certification,
+        or legal opinion. Use only for internal review; consult qualified assessors
+        for regulatory statements.
         
         Args:
             start_date: Report start date
             end_date: Report end date
             
         Returns:
-            GDPR compliance report
+            Heuristic GDPR-oriented audit report (not a compliance certification)
         """
         if end_date is None:
             end_date = datetime.now(timezone.utc)
@@ -156,7 +168,7 @@ class AuditReporter:
                 'end': end_date.isoformat()
             },
             'data_controller': {
-                'name': 'Code Migration Assistant',
+                'name': 'ShiftIQ',
                 'contact': 'privacy@example.com'
             },
             'gdpr_articles': gdpr_articles,
@@ -174,14 +186,19 @@ class AuditReporter:
         end_date: datetime = None
     ) -> Dict:
         """
-        Generate HIPAA compliance report.
+        Generate HIPAA-oriented pattern audit report (heuristic).
+        
+        This is a development-time heuristic report based on PHI pattern counts and
+        audit events. It is NOT a formal HIPAA compliance assessment, certification,
+        or legal opinion. Use only for internal review; consult qualified assessors
+        for regulatory statements.
         
         Args:
             start_date: Report start date
             end_date: Report end date
             
         Returns:
-            HIPAA compliance report
+            Heuristic HIPAA-oriented audit report (not a compliance certification)
         """
         if end_date is None:
             end_date = datetime.now(timezone.utc)
@@ -213,7 +230,7 @@ class AuditReporter:
                 'end': end_date.isoformat()
             },
             'covered_entity': {
-                'name': 'Code Migration Assistant',
+                'name': 'ShiftIQ',
                 'type': 'Business Associate'
             },
             'hipaa_rules': hipaa_rules,

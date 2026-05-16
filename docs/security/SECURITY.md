@@ -324,7 +324,7 @@ security:
 
 If you discover a security vulnerability, please report it responsibly:
 
-1. **Email:** Open a [GitHub Security Advisory](https://github.com/anudeepsrib/code-migration-assistant/security/advisories/new)
+1. **Email:** Open a [GitHub Security Advisory](https://github.com/Anudeepsrib/shiftIQ/security/advisories/new)
 2. **Response time:** Within 48 hours
 3. **Patch timeline:** Critical issues within 7 days
 

@@ -1,6 +1,6 @@
-# Code Migration Assistant: System Architecture
+# ShiftIQ: System Architecture
 
-The Code Migration Assistant is designed to be an enterprise-grade platform capable of running locally or deployed within strict, air-gapped security environments. It enforces static analysis over dynamic execution, uses strong structured data models, and is endlessly extensible through a robust Plugin Registry.
+ShiftIQ is designed to be a local-first platform capable of running locally or deployed within strict, air-gapped security environments. It enforces static analysis over dynamic execution, uses strong structured data models, and is extensible through a robust Plugin Registry.
 
 ## High-Level Components
 

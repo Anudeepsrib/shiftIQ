@@ -15,8 +15,10 @@ __pycache__/
 .mypy_cache/
 
 # Python packaging and coverage
-*.egg-info/
-.eggs/
+**/*.egg-info/
+**/.eggs/
+**/__pycache__/
+**/*.py[cod]
 dist/
 build/
 wheels/

@@ -1,8 +1,8 @@
-# Developing Plugins for Code Migration Assistant
+# Developing Plugins for ShiftIQ
 
 The platform uses Python `entry_points` to dynamically discover and inject external packages as native migrators.
 
-This means you can build proprietary migrations for your internal enterprise software without needing to fork the `code-migration-assistant` core.
+This means you can build proprietary migrations for your internal enterprise software without needing to fork the `shiftIQ` core.
 
 ## The `BaseMigrator` Interface
 
@@ -55,7 +55,7 @@ If your new migrator is in its own python package `my-custom-migrator`, update y
 my_internal_framework = "my_custom_migrator.module:MyInternalFrameworkMigrator"
 ```
 
-Once a user `pip install`'s your package alongside the parent `code-migration-assistant`, it will automatically appear in the UI, `/api/v1/migrators`, and the Typer CLI as a usable system!
+Once a user `pip install`'s your package alongside the parent `shiftIQ`, it will automatically appear in the UI, `/api/v1/migrators`, and the Typer CLI as a usable system!
 
 ## Best Practices
 1. **Respect Boundaries**: Stick to AST or RegEx scanning in your `migrate` functions. Avoid any type of system modifications inside plugins.

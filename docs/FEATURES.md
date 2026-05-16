@@ -1,4 +1,4 @@
-# Table of Features — Code Migration Assistant
+# Table of Features — ShiftIQ
 
 This document tabulates the features that are fully implemented and present in the codebase. It separates core execution functionality, enterprise security features, developer capabilities, and integrations.
 

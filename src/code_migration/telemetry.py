@@ -18,7 +18,7 @@ except ImportError:
     _OTEL_AVAILABLE = False
 
 
-def setup_telemetry(service_name: str = "code-migration-assistant") -> None:
+def setup_telemetry(service_name: str = "shiftiq") -> None:
     """
     Initialize OpenTelemetry tracer if enabled.
     
