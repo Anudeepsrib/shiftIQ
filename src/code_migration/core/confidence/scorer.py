@@ -10,8 +10,6 @@ AI-powered pre-migration risk assessment with:
 """
 
 import ast
-import json
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
@@ -44,7 +42,7 @@ class MigrationConfidenceAnalyzer:
     - Breaking changes scope
     - Team skill level (optional input)
     
-    SECURITY: All analysis is static, no code execution.
+    SECURITY: Default analysis is static and does not execute target code.
     """
     
     # default weights if not in config
@@ -206,40 +204,32 @@ class MigrationConfidenceAnalyzer:
         """
         Calculate test coverage score.
         
-        Security: Run coverage in isolated subprocess with timeout.
+        Security: static inspection only; never runs target tests.
         """
-        try:
-            # Check for pytest configuration
-            pytest_files = list(self.project_path.rglob('pytest.ini')) + \
-                          list(self.project_path.rglob('pyproject.toml')) + \
-                          list(self.project_path.rglob('setup.cfg'))
-            
-            if not pytest_files:
-                return 30  # No test configuration found
-            
-            # Run pytest with coverage (timeout 60s)
-            result = subprocess.run(
-                ['pytest', '--cov=.', '--cov-report=json', '--tb=no'],
-                cwd=self.project_path,
-                capture_output=True,
-                timeout=60,
-                check=False
-            )
-            
-            if result.returncode == 0:
-                # Parse coverage report
-                coverage_file = self.project_path / 'coverage.json'
-                if coverage_file.exists():
-                    with open(coverage_file) as f:
-                        data = json.load(f)
-                        return int(data.get('totals', {}).get('percent_covered', 0))
-            
-            return 30  # Default low score if no tests
-            
-        except subprocess.TimeoutExpired:
-            return 20  # Very low score for timeout
-        except Exception:
-            return 30  # Default on error
+        test_files = []
+        for pattern in ("test_*.py", "*_test.py", "*.test.js", "*.test.ts", "*.spec.ts", "*.spec.tsx"):
+            test_files.extend(self.project_path.rglob(pattern))
+
+        source_files = [
+            path
+            for ext in ("*.py", "*.js", "*.jsx", "*.ts", "*.tsx")
+            for path in self.project_path.rglob(ext)
+            if "node_modules" not in path.parts and ".venv" not in path.parts
+        ]
+
+        if not source_files:
+            return 50
+        if not test_files:
+            return 30
+
+        ratio = len(test_files) / max(len(source_files), 1)
+        if ratio >= 0.5:
+            return 85
+        if ratio >= 0.25:
+            return 70
+        if ratio >= 0.1:
+            return 55
+        return 40
     
     def _analyze_complexity(self) -> int:
         """
@@ -272,7 +262,7 @@ class MigrationConfidenceAnalyzer:
         """
         Analyze dependency health.
         
-        Security: Check for known vulnerabilities.
+        Security: static dependency hygiene checks only.
         """
         requirements_files = [
             self.project_path / 'requirements.txt',
@@ -290,76 +280,51 @@ class MigrationConfidenceAnalyzer:
             return 40  # No deps file = medium risk
         
         try:
-            # Try to run pip-audit (security vulnerability scanner)
-            result = subprocess.run(
-                ['pip-audit', '-r', str(requirements_file), '--format', 'json'],
-                capture_output=True,
-                timeout=30,
-                check=False
-            )
-            
-            if result.returncode == 0:
-                try:
-                    vulnerabilities = json.loads(result.stdout)
-                    vuln_count = len(vulnerabilities.get('dependencies', []))
-                    
-                    if vuln_count == 0:
-                        return 95
-                    elif vuln_count < 5:
-                        return 70
-                    elif vuln_count < 10:
-                        return 50
-                    else:
-                        return 20  # Many vulnerabilities = high risk
-                except json.JSONDecodeError:
-                    pass
-            
-            return 60  # Default if audit fails
-            
-        except Exception:
+            lines = [
+                line.strip()
+                for line in requirements_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+                if line.strip() and not line.strip().startswith("#")
+            ]
+        except OSError:
             return 50
+
+        if not lines:
+            return 60
+
+        pinned = sum("==" in line or line.startswith(("-e ", "git+")) for line in lines)
+        constrained = sum(any(op in line for op in ("==", ">=", "<=", "~=", "<")) for line in lines)
+        hygiene_ratio = constrained / len(lines)
+        pin_bonus = min(15, int((pinned / len(lines)) * 15))
+        return max(35, min(95, int(45 + hygiene_ratio * 35 + pin_bonus)))
     
     def _analyze_code_quality(self) -> int:
         """
-        Run linters for code quality.
-        
-        Security: Linters run in isolated subprocess.
+        Estimate code quality by parsing source files without executing linters.
         """
         try:
-            # Try to run flake8 (Python linter)
-            result = subprocess.run(
-                ['flake8', '.', '--count', '--statistics', '--quiet'],
-                cwd=self.project_path,
-                capture_output=True,
-                timeout=60,
-                check=False
-            )
-            
-            if result.returncode == 0:
-                # Parse flake8 output
-                output = result.stdout.decode('utf-8').strip()
-                if output:
-                    lines = output.split('\n')
-                    error_count = 0
-                    for line in lines:
-                        if line.strip().isdigit():
-                            error_count += int(line.strip())
-                    
-                    # Score based on error density
-                    total_lines = self._count_total_lines()
-                    error_density = error_count / max(total_lines, 1) * 1000
-                    
-                    if error_density < 5:
-                        return 90
-                    elif error_density < 15:
-                        return 70
-                    elif error_density < 30:
-                        return 50
-                    else:
-                        return 30
-            
-            return 70  # Default good quality
-            
+            py_files = list(self.project_path.rglob("*.py"))
+            if not py_files:
+                return 70
+
+            syntax_errors = 0
+            long_files = 0
+            total_files = 0
+            for py_file in py_files:
+                if any(part in {".venv", "venv", "__pycache__"} for part in py_file.parts):
+                    continue
+                total_files += 1
+                content = py_file.read_text(encoding="utf-8", errors="ignore")
+                if len(content.splitlines()) > 1000:
+                    long_files += 1
+                try:
+                    ast.parse(content)
+                except SyntaxError:
+                    syntax_errors += 1
+
+            if total_files == 0:
+                return 70
+            penalty = (syntax_errors * 25) + (long_files * 5)
+            return max(30, min(90, 90 - penalty))
         except Exception:
             return 60
     

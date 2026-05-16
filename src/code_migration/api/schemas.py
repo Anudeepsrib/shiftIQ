@@ -18,8 +18,9 @@ class HealthResponse(BaseModel):
 
 
 class AnalyzeRequest(BaseModel):
-    path: str = Field(..., description="Absolute path to the file or project directory")
+    path: str = Field(..., description="Path to a file or project directory under an allowed workspace root")
     migration_type: str = Field(default="react-hooks", description="Migration type identifier")
+    include_confidence: bool = Field(default=False, description="Include static confidence scoring")
 
 
 class MigrateRequest(AnalyzeRequest):
@@ -41,7 +42,14 @@ class MigrateResponse(BaseModel):
 
 
 class ComplianceScanRequest(BaseModel):
-    path: str = Field(..., description="Absolute path to the project directory")
+    path: str = Field(..., description="Path to a project directory under an allowed workspace root")
+    include_raw: bool = Field(default=False, description="Include raw sensitive matches if explicitly enabled")
+
+
+class RollbackRequest(BaseModel):
+    path: str = Field(default=".", description="Project path under an allowed workspace root")
+    checkpoint_id: str = Field(..., description="Checkpoint ID to restore")
+    dry_run: bool = Field(default=False, description="Preview rollback without changing files")
 
 
 class PluginInfoSchema(BaseModel):

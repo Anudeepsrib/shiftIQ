@@ -1,166 +1,82 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+# Environment and local configuration
+.env
+.env.*
+!.env.example
 
-# Virtual environments
+# Python environments and caches
 .venv/
 venv/
 env/
-
-# Egg info (build artifacts)
-*.egg-info/
-*.egg
-
-# Node
-node_modules/
-
-# UI build artifacts
-ui/dist/
-npm-debug.log
-yarn-error.log
-
-# Mac
-.DS_Store
-
-# Pytest
+__pycache__/
+*.py[cod]
+*$py.class
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
-# Secrets and Sensitive Data
-.env
-.env.local
-.env.development
-.env.production
-.env.test
-*.pem
-*.key
-*.crt
-*.p12
-*.pfx
-secrets/
-api_keys/
-credentials/
-config/secrets.yaml
-config/production.yaml
-config/staging.yaml
-*.json.bak
-*.js.bak
-*.py.bak
+# Python packaging and coverage
+*.egg-info/
+.eggs/
+dist/
+build/
+wheels/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 
-# IDE and Editor Files
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
-.vscode/settings.json
-.vscode/launch.json
-.vscode/extensions.json
-.sublime-project
-.sublime-workspace
+# Node and UI output
+node_modules/
+ui/node_modules/
+ui/dist/
+ui/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Backup Files
-*.bak
-*.backup
-*.old
-*.orig
-*.rej
-
-# Temporary Files
-tmp/
-temp/
-*.tmp
-*.temp
-.cache/
-*.cache
-
-# OS Generated Files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Logs and Debug Files
+# Logs and local reports
 logs/
 *.log
-*.out
-*.err
-debug.log
-error.log
-access.log
 audit.log
-
-# Coverage and Profiling
-.coverage
-htmlcov/
-.coverage.*
-*.prof
-*.profile
-*.lprof
-
-# Build Artifacts
-build/
-dist/
-target/
-bin/
-out/
-output/
-
-# Database Files
-*.db
-*.sqlite
-*.sqlite3
-*.sql
-
-# Configuration Files with Secrets
-config/production.*
-config/secrets.*
-config/local.*
-*config.yaml
-*config.json
-*config.toml
-*config.ini
-
-# Test Artifacts
-test-results/
-test-reports/
-test-output/
-coverage.xml
-test-results.xml
-
-# Documentation Build
-docs/_build/
-docs/.doctrees/
-site/
-
-# Local Development
-.local/
-local/
-dev/
-development/
-
-# Security Scanning Results
+security_audit.jsonl
 security-scan.json
 compliance-report.json
 audit-report.json
 bandit-report.json
 safety-report.json
 
-# Performance Reports
-performance-report.json
-benchmark-results.json
-profiling-results.json
-
-# Migration Artifacts
+# Migration artifacts
 .migration-backups/
 .migration-logs/
 .migration-checkpoints/
 migration-report.md
-*.log
-test_output*.txt
+
+# Temporary files
+tmp/
+temp/
+.cache/
+*.tmp
+*.temp
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# Backup and patch leftovers
+*.bak
+*.backup
+*.old
+*.orig
+*.rej

@@ -6,7 +6,7 @@ Defense Layers:
 1. AST parsing (never eval/exec)
 2. Read-only file operations
 3. Resource limits (CPU, memory, time)
-4. Isolated process (subprocess with ulimit)
+4. File-size and file-count limits
 """
 
 import ast
@@ -45,8 +45,12 @@ class SafeCodeAnalyzer:
             SecurityError: If file is too large or analysis fails
         """
         # Validate file size
+        if file_path.is_symlink():
+            raise SecurityError(f"Refusing to analyze symlink: {file_path}")
         if not file_path.exists():
             raise SecurityError(f"File does not exist: {file_path}")
+        if not file_path.is_file():
+            raise SecurityError(f"Path is not a regular file: {file_path}")
         file_size = os.path.getsize(file_path)
         if file_size > (settings.security.max_file_size_kb * 1024):
             return {"safe": False, "reason": f"File exceeds maximum size of {settings.security.max_file_size_kb}KB"}
@@ -188,7 +192,12 @@ class SafeCodeAnalyzer:
         }
         
         # Find all Python files
-        py_files = list(directory.rglob('*.py'))
+        py_files = [
+            path
+            for path in directory.rglob("*.py")
+            if not path.is_symlink()
+            and not any(part in {".git", ".venv", "venv", "__pycache__", "node_modules"} for part in path.parts)
+        ][: settings.security.max_files]
         
         for py_file in py_files:
             try:

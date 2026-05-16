@@ -1,57 +1,90 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=70", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "code-migration-assistant"
+name = "shiftiq"
 version = "0.1.0"
-description = "Secure, intelligent code migration assistant for AI agents"
+description = "Local-first code migration assistant with static analysis, MCP tools, rollback, and pattern scanning"
 readme = "README.md"
-authors = [{ name = "Open Source Contributor", email = "contributor@example.com" }]
+requires-python = ">=3.11,<3.14"
+authors = [{ name = "ShiftIQ maintainers" }]
 license = { file = "LICENSE" }
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Code Generators",
 ]
-requires-python = ">=3.8"
 dependencies = [
-    "typer[all]",
-    "rich",
-    "pyyaml",
-    "python-dotenv",
-    "networkx",
-    "psutil",
-    "fastapi",
-    "uvicorn",
-    "sse-starlette",
-    "pydantic-settings",
-    "mcp[cli]",
-    "structlog"
+    "fastapi>=0.115,<1",
+    "mcp[cli]>=1.9,<2",
+    "networkx>=3.2,<4",
+    "psutil>=5.9,<8",
+    "pydantic-settings>=2.6,<3",
+    "python-dotenv>=1,<2",
+    "pyyaml>=6,<7",
+    "requests>=2.32,<3",
+    "rich>=13,<15",
+    "sse-starlette>=2,<4",
+    "structlog>=24,<26",
+    "typer>=0.12,<1",
+    "uvicorn[standard]>=0.30,<1",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Anudeepsrib/shiftIQ"
+Repository = "https://github.com/Anudeepsrib/shiftIQ"
+Issues = "https://github.com/Anudeepsrib/shiftIQ/issues"
+
 [project.scripts]
+migrate = "code_migration.cli:main"
+shiftiq = "code_migration.cli:main"
 code-migration-mcp = "code_migration.mcp_server:main"
+shiftiq-mcp = "code_migration.mcp_server:main"
 
 [project.entry-points."code_migration.migrators"]
 react-hooks = "code_migration.migrators.react_hooks:ReactHooksMigrator"
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "pytest-cov",
-    "pytest-timeout",
-    "black",
-    "isort",
-    "bandit",
-    "pre-commit"
+    "build>=1.2,<2",
+    "pip-audit>=2.7,<3",
+    "pytest>=8,<9",
+    "pytest-cov>=5,<8",
+    "pytest-timeout>=2.3,<3",
+    "ruff>=0.8,<1",
 ]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["src"]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "ui/node_modules",
+    "ui/dist",
+    "htmlcov",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]

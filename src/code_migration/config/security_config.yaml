@@ -1,0 +1,35 @@
+# Security Configuration
+
+security:
+  # Maximum file size in bytes (10MB)
+  max_file_size: 10485760
+  
+  # Allowed file extensions for migration
+  allowed_extensions:
+    - .js
+    - .jsx
+    - .ts
+    - .tsx
+    - .py
+    - .v
+    - .vue
+    - .css
+    - .scss
+    - .json
+    - .md
+
+  # Directories to exclude from analysis/migration
+  excluded_dirs:
+    - node_modules
+    - .git
+    - .venv
+    - venv
+    - __pycache__
+    - dist
+    - build
+
+  # Backup configuration
+  backup:
+    enabled: true
+    location: .migration-backups
+    retention_days: 7

@@ -1,4 +1,4 @@
-from fastapi import Request, status
+from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from code_migration.api.schemas import ErrorResponse, ErrorDetails
 from code_migration.core.security.input_validator import SecurityError
@@ -27,6 +27,21 @@ async def security_error_handler(request: Request, exc: SecurityError) -> JSONRe
         content=ErrorResponse(
             error=ErrorDetails(code="SECURITY_VIOLATION", message=str(exc))
         ).model_dump()
+    )
+
+
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """Return framework HTTP errors in the same stable envelope."""
+    message = exc.detail if isinstance(exc.detail, str) else "Request failed"
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorResponse(
+            error=ErrorDetails(
+                code="HTTP_ERROR",
+                message=message,
+            )
+        ).model_dump(),
+        headers=getattr(exc, "headers", None),
     )
 
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:

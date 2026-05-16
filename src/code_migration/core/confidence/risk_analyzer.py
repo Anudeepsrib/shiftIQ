@@ -9,6 +9,7 @@ Identifies and categorizes migration risks:
 """
 
 import re
+import shutil
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -235,12 +236,7 @@ class RiskAnalyzer:
         missing_tools = []
         
         for tool in required_tools:
-            try:
-                import subprocess
-                result = subprocess.run(['which', tool], capture_output=True)
-                if result.returncode != 0:
-                    missing_tools.append(tool)
-            except Exception:
+            if shutil.which(tool) is None:
                 missing_tools.append(tool)
         
         if missing_tools:

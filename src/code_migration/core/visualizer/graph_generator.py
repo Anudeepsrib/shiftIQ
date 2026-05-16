@@ -281,7 +281,8 @@ class VisualMigrationPlanner:
             ]
         }
         
-        # Generate HTML template with embedded D3.js
+        # Generate HTML template with embedded graph data. The page avoids
+        # external scripts so local-first usage does not make network calls.
         html_template = self._generate_html_template(graph_data)
         
         # Write to file
@@ -298,7 +299,7 @@ class VisualMigrationPlanner:
 <head>
     <meta charset="utf-8">
     <title>Migration Dependency Graph</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <meta name="description" content="D3.js-compatible migration graph data rendered without external scripts">
     <style>
         body {{ 
             margin: 0; 
@@ -406,133 +407,34 @@ class VisualMigrationPlanner:
     
     <script>
         const graphData = {json.dumps(graph_data, indent=2)};
-        
-        // D3.js force-directed graph
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        
-        const svg = d3.select("#graph")
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height);
-        
-        // Add zoom behavior
-        const g = svg.append("g");
-        svg.call(d3.zoom()
-            .scaleExtent([0.1, 10])
-            .on("zoom", (event) => {{
-                g.attr("transform", event.transform);
-            }}));
-        
-        // Color scale for waves
-        const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-        
-        // Force simulation
-        const simulation = d3.forceSimulation(graphData.nodes)
-            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100))
-            .force("charge", d3.forceManyBody().strength(-300))
-            .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collision", d3.forceCollide().radius(30));
-        
-        // Links
-        const link = g.append("g")
-            .selectAll("line")
-            .data(graphData.links)
-            .enter().append("line")
-            .attr("class", "link");
-        
-        // Nodes
-        const node = g.append("g")
-            .selectAll("g")
-            .data(graphData.nodes)
-            .enter().append("g")
-            .attr("class", d => `node ${{d.type}}`)
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended));
-        
-        // Node circles
-        node.append("circle")
-            .attr("r", d => Math.max(8, Math.min(20, d.size / 100)))
-            .attr("fill", d => d.type === 'file' ? colorScale(d.wave) : "#2196F3");
-        
-        // Node labels
-        node.append("text")
-            .attr("dx", 15)
-            .attr("dy", ".35em")
-            .text(d => d.label)
-            .style("font-size", "10px");
-        
-        // Tooltip
-        const tooltip = d3.select(".tooltip");
-        
-        node.on("mouseover", function(event, d) {{
-            tooltip.transition()
-                .duration(200)
-                .style("opacity", .9);
-            tooltip.html(`
-                <strong>${{d.label}}</strong><br/>
-                Type: ${{d.type}}<br/>
-                Wave: ${{d.wave}}<br/>
-                Lines: ${{d.size}}<br/>
-                Functions: ${{d.functions}}<br/>
-                Classes: ${{d.classes}}
-            `)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        }})
-        .on("mouseout", function(d) {{
-            tooltip.transition()
-                .duration(500)
-                .style("opacity", 0);
-        }});
-        
-        // Update positions on tick
-        simulation.on("tick", () => {{
-            link
-                .attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y);
-            
-            node.attr("transform", d => `translate(${{d.x}},${{d.y}})`);
-        }});
-        
-        // Drag functions
-        function dragstarted(event, d) {{
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }}
-        
-        function dragged(event, d) {{
-            d.fx = event.x;
-            d.fy = event.y;
-        }}
-        
-        function dragended(event, d) {{
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        }}
-        
-        // Populate wave list
-        const waveList = d3.select("#wave-list");
-        graphData.waves.forEach(wave => {{
-            const item = waveList.append("div")
-                .attr("class", "wave-item");
-            
-            item.append("div")
-                .attr("class", "wave-header")
-                .html("🌊 Wave " + wave.wave + " (" + wave.count + " files)");
-            
-            const fileList = item.append("div")
-                .attr("class", "wave-files");
-            
-            wave.files.forEach(file => {{
-                fileList.append("div").text("• " + file);
+
+        const graph = document.querySelector("#graph");
+        const summary = document.createElement("pre");
+        summary.textContent = JSON.stringify(graphData.metadata, null, 2);
+        summary.style.padding = "24px";
+        summary.style.margin = "0";
+        summary.style.whiteSpace = "pre-wrap";
+        graph.appendChild(summary);
+
+        const waveList = document.querySelector("#wave-list");
+        graphData.waves.forEach((wave) => {{
+            const item = document.createElement("div");
+            item.className = "wave-item";
+
+            const header = document.createElement("div");
+            header.className = "wave-header";
+            header.textContent = "Wave " + wave.wave + " (" + wave.count + " files)";
+            item.appendChild(header);
+
+            const fileList = document.createElement("div");
+            fileList.className = "wave-files";
+            wave.files.forEach((file) => {{
+                const row = document.createElement("div");
+                row.textContent = "- " + file;
+                fileList.appendChild(row);
             }});
+            item.appendChild(fileList);
+            waveList.appendChild(item);
         }});
     </script>
 </body>

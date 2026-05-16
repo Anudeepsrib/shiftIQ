@@ -373,10 +373,10 @@ REACT_APP_SUPPORT_PHONE=555-123-4567
             
             # Generate compliance report
             report = pii_detector.generate_compliance_report(scan_results)
-            assert "COMPLIANCE SCAN REPORT" in report
+            assert "PII/PHI/PCI PATTERN SCAN REPORT" in report
             assert "GDPR" in report
             assert "CRITICAL FINDINGS" in report
-            assert "COMPLIANCE RECOMMENDATIONS" in report
+            assert "RECOMMENDATIONS" in report
         
         # Initialize audit reporter
         with AuditReporter(temp_project) as audit_reporter:

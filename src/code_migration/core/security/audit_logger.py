@@ -127,7 +127,7 @@ class SecurityAuditLogger:
             'result': result.upper(),
             'ip_address': ip_address or self._get_client_ip(),
             'user_agent': user_agent or 'Unknown',
-            'details': details or {},
+            'details': self._sanitize_details(details or {}),
             'session_id': self._get_session_id(),
             'compliance': {
                 'gdpr_pii_processed': self._contains_pii(resource),
@@ -214,7 +214,7 @@ class SecurityAuditLogger:
         """
         migration_details = {
             'migration_type': migration_type,
-            'project_path': project_path
+            'project': self._sanitize_resource_path(project_path)
         }
         if details:
             migration_details.update(details)
@@ -397,6 +397,21 @@ class SecurityAuditLogger:
             return str(p)
         except Exception:
             return "SANITIZED"
+
+    @classmethod
+    def _sanitize_details(cls, value):
+        """Redact absolute paths from nested logging metadata."""
+        if isinstance(value, dict):
+            sanitized = {}
+            for key, item in value.items():
+                if key.endswith("_path") or key in {"path", "project_path", "file_path"}:
+                    sanitized[key] = cls._sanitize_resource_path(str(item))
+                else:
+                    sanitized[key] = cls._sanitize_details(item)
+            return sanitized
+        if isinstance(value, list):
+            return [cls._sanitize_details(item) for item in value]
+        return value
     
     @staticmethod
     def _get_client_ip() -> str:

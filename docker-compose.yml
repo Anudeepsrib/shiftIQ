@@ -1,40 +1,42 @@
-version: '3.8'
+name: shiftiq
 
 services:
   api:
     build:
       context: .
-      target: production
-    image: code-migration-assistant:latest
-    container_name: migration_api
+      dockerfile: Dockerfile
+    image: shiftiq-api:local
     restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      MIGRATION_SERVER__ENVIRONMENT: ${MIGRATION_SERVER__ENVIRONMENT:-development}
+      MIGRATION_SERVER__HOST: 0.0.0.0
+      MIGRATION_SERVER__PORT: 8000
+      MIGRATION_SERVER__DOCS_ENABLED: ${MIGRATION_SERVER__DOCS_ENABLED:-false}
+      MIGRATION_SERVER__CORS_ORIGINS: '${MIGRATION_SERVER__CORS_ORIGINS:-["http://localhost:5173","http://127.0.0.1:5173"]}'
+      MIGRATION_SECURITY__ALLOWED_ROOTS: '["/data/projects"]'
+      MIGRATION_OBSERVABILITY__LOG_LEVEL: ${MIGRATION_OBSERVABILITY__LOG_LEVEL:-INFO}
+      MIGRATION_OBSERVABILITY__LOG_FORMAT: json
+      MIGRATION_API_KEY: ${MIGRATION_API_KEY:-}
     ports:
       - "8000:8000"
-    environment:
-      # Application Configuration overriding config.defaults.yaml variables
-      - MIGRATION_SERVER__ENVIRONMENT=production
-      - MIGRATION_SERVER__HOST=0.0.0.0
-      - MIGRATION_SERVER__PORT=8000
-      - MIGRATION_OBSERVABILITY__LOG_LEVEL=INFO
-      - MIGRATION_OBSERVABILITY__LOG_FORMAT=json
-      
-      # Security (Mock API Key for local docker-compose testing)
-      - MIGRATION_API_KEY=dev-enterprise-key-123
-      
-      # Feature Flags
-      - MIGRATION_ANALYSIS__COST_RATE_PER_HOUR=150.0
     volumes:
-      # Mount projects directory where user code to be analyzed will live
-      - ./projects:/data/projects
-      # Mount internal logs for debugging if needed
-      - migration_logs:/app/.migration-logs
+      - ./projects:/data/projects:rw
+      - shiftiq_logs:/app/.migration-logs
+      - shiftiq_checkpoints:/app/.migration-checkpoints
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).read()"
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
-      start_period: 5s
+      start_period: 10s
 
 volumes:
-  migration_logs:
-    driver: local
+  shiftiq_logs:
+  shiftiq_checkpoints:

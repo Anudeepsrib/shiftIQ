@@ -1,6 +1,6 @@
 {
     "mcpServers": {
-        "code-migration-assistant": {
+        "shiftiq": {
             "command": "python",
             "args": [
                 "-m",

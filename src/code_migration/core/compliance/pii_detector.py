@@ -1,33 +1,21 @@
-"""
-Personally Identifiable Information (PII) detector.
+"""PII/PHI/PCI-oriented pattern scanner.
 
-Detects PII for GDPR compliance:
-- Email addresses
-- Phone numbers
-- Social Security numbers
-- Credit card numbers
-- Addresses
-- Names
+This module detects sensitive-looking values in local files. It is a
+compliance-oriented development check, not a certification or legal review.
 """
 
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
+import hashlib
+from typing import Dict, List, Optional
 
 from ..security import SecurityAuditLogger
+from code_migration.config import settings
 
 
 class PIIDetector:
-    """
-    Detect PII for GDPR compliance.
-    
-    Regulations Covered:
-    - GDPR (EU): Personal data protection
-    - HIPAA (US): Health information privacy
-    - CCPA (CA): Consumer privacy
-    - PCI-DSS: Payment card data
-    """
+    """Detect sensitive-data patterns with redaction by default."""
     
     # PII patterns (GDPR Article 4)
     PII_PATTERNS = {
@@ -53,7 +41,8 @@ class PIIDetector:
             'pattern': r'\b(?:\d{4}[-\s]?){3}\d{4}\b',
             'severity': 'CRITICAL',
             'confidence': 'HIGH',
-            'regulation': 'PCI-DSS'
+            'regulation': 'PCI-DSS',
+            'validator': 'luhn'
         },
         'ip_address': {
             'pattern': r'\b(?:\d{1,3}\.){3}\d{1,3}\b',
@@ -120,8 +109,35 @@ class PIIDetector:
             'regulation': 'HIPAA'
         }
     }
-    
-    def __init__(self, project_path: Path):
+
+    SECRET_PATTERNS = {
+        'aws_access_key': {
+            'pattern': r'\bAKIA[0-9A-Z]{16}\b',
+            'severity': 'CRITICAL',
+            'confidence': 'HIGH',
+            'regulation': 'SECRET'
+        },
+        'api_key': {
+            'pattern': r'(?i)\b(?:api[_-]?key|token|secret|client_secret)\b\s*[:=]\s*[\'"]?[A-Za-z0-9_\-]{16,}[\'"]?',
+            'severity': 'HIGH',
+            'confidence': 'MEDIUM',
+            'regulation': 'SECRET'
+        },
+        'jwt': {
+            'pattern': r'\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b',
+            'severity': 'HIGH',
+            'confidence': 'HIGH',
+            'regulation': 'SECRET'
+        },
+        'private_key': {
+            'pattern': r'-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----',
+            'severity': 'CRITICAL',
+            'confidence': 'HIGH',
+            'regulation': 'SECRET'
+        },
+    }
+
+    def __init__(self, project_path: Path, expose_raw: Optional[bool] = None):
         """
         Initialize PII detector.
         
@@ -129,13 +145,14 @@ class PIIDetector:
             project_path: Path to project to scan
         """
         self.project_path = Path(project_path)
+        self.expose_raw = settings.security.expose_raw_findings if expose_raw is None else expose_raw
         
         # Initialize audit logger
         log_dir = self.project_path / '.migration-logs'
         self.audit_logger = SecurityAuditLogger(log_dir)
         
         # Combine all patterns
-        self.all_patterns = {**self.PII_PATTERNS, **self.PHI_PATTERNS}
+        self.all_patterns = {**self.PII_PATTERNS, **self.PHI_PATTERNS, **self.SECRET_PATTERNS}
 
     def close(self):
         """Close detector and release resources."""
@@ -159,6 +176,17 @@ class PIIDetector:
             List of PII findings
         """
         findings = []
+        if file_path.is_symlink() or not file_path.is_file():
+            return findings
+
+        try:
+            if file_path.stat().st_size > settings.security.max_file_size_kb * 1024:
+                return findings
+            sample = file_path.read_bytes()[:4096]
+            if b"\x00" in sample:
+                return findings
+        except OSError:
+            return findings
         
         try:
             content = file_path.read_text(encoding='utf-8', errors='ignore')
@@ -173,9 +201,12 @@ class PIIDetector:
                     )
                     
                     for match in matches:
+                        raw_match = match.group()
+                        if pattern_info.get('validator') == 'luhn' and not self._passes_luhn(raw_match):
+                            continue
                         line_num = content[:match.start()].count('\n') + 1
                         line_content = lines[line_num - 1] if line_num <= len(lines) else ""
-                        
+
                         finding = {
                             'type': pii_type,
                             'severity': pattern_info['severity'],
@@ -183,12 +214,14 @@ class PIIDetector:
                             'regulation': pattern_info['regulation'],
                             'line': line_num,
                             'column': match.start() - content.rfind('\n', 0, match.start()),
-                            'match': match.group()[:50] + "..." if len(match.group()) > 50 else match.group(),
+                            'match': self._format_match(raw_match),
+                            'fingerprint': self._fingerprint(raw_match),
                             'file_path': str(file_path.relative_to(self.project_path)),
-                            'context': self._get_context(line_content, match.group()),
+                            'context': self._get_context(line_content, raw_match),
                             'recommendation': self._get_recommendation(pii_type, pattern_info['regulation'])
                         }
-                        
+                        if self.expose_raw:
+                            finding['raw_match'] = raw_match
                         findings.append(finding)
                         
                 except re.error:
@@ -230,9 +263,17 @@ class PIIDetector:
             }
         )
         
+        scanned_paths = set()
         for ext in file_extensions:
             for file_path in self.project_path.rglob(f'*{ext}'):
+                if len(scanned_paths) >= settings.security.max_files:
+                    break
+                if file_path in scanned_paths:
+                    continue
+                scanned_paths.add(file_path)
                 # Skip hidden and system files (except .env)
+                if any(part in {'.git', '.venv', 'venv', 'node_modules', '__pycache__'} for part in file_path.parts):
+                    continue
                 if (file_path.name.startswith('.') and file_path.name != '.env') or file_path.name.startswith('__'):
                     continue
                 
@@ -267,7 +308,7 @@ class PIIDetector:
         
         return {
             'scan_timestamp': datetime.now().isoformat(),
-            'project_path': str(self.project_path),
+            'project_path': self.project_path.name,
             'files_scanned': files_scanned,
             'files_with_pii': files_with_pii,
             'total_findings': len(all_findings),
@@ -275,7 +316,7 @@ class PIIDetector:
             'findings': all_findings
         }
     
-    def generate_compliance_report(self, scan_results: Dict) -> str:
+    def generate_compliance_report(self, scan_results: Optional[Dict] = None) -> str:
         """
         Generate compliance report from scan results.
         
@@ -285,19 +326,23 @@ class PIIDetector:
         Returns:
             Formatted compliance report
         """
+        if scan_results is None:
+            scan_results = self.scan_directory()
+
         if not scan_results.get('findings'):
-            return "✅ No PII/PHI detected in scanned files."
+            return "No PII/PHI/PCI-like patterns detected in scanned files."
         
         findings = scan_results['findings']
         summary = scan_results['summary']
         
         report_lines = [
-            "🔒 COMPLIANCE SCAN REPORT",
+            "PII/PHI/PCI PATTERN SCAN REPORT",
             "=" * 50,
-            f"📅 Scan Date: {scan_results['scan_timestamp']}",
-            f"📁 Project: {scan_results['project_path']}",
+            "Compliance-oriented checks only; not a formal compliance determination.",
+            f"Scan Date: {scan_results['scan_timestamp']}",
+            f"Project: {scan_results['project_path']}",
             "",
-            "📊 SCAN SUMMARY:",
+            "SCAN SUMMARY:",
             f"  Files Scanned: {scan_results['files_scanned']}",
             f"  Files with PII: {scan_results['files_with_pii']}",
             f"  Total Findings: {scan_results['total_findings']}",
@@ -306,10 +351,10 @@ class PIIDetector:
         
         # Summary by regulation
         report_lines.extend([
-            "📋 FINDINGS BY REGULATION:",
+            "FINDINGS BY CATEGORY:",
         ])
         
-        for regulation in ['GDPR', 'HIPAA', 'PCI-DSS']:
+        for regulation in ['GDPR', 'HIPAA', 'PCI-DSS', 'SECRET']:
             reg_findings = [f for f in findings if f['regulation'] == regulation]
             if reg_findings:
                 critical = len([f for f in reg_findings if f['severity'] == 'CRITICAL'])
@@ -320,47 +365,47 @@ class PIIDetector:
                 report_lines.append(f"  {regulation}:")
                 report_lines.append(f"    Critical: {critical}, High: {high}, Medium: {medium}, Low: {low}")
         
-        report_lines.extend(["", "🚨 CRITICAL FINDINGS:", ""])
+        report_lines.extend(["", "CRITICAL FINDINGS:", ""])
         
         # Critical findings first
         critical_findings = [f for f in findings if f['severity'] == 'CRITICAL']
         if critical_findings:
             for finding in critical_findings[:10]:  # Limit to first 10
                 report_lines.extend([
-                    f"  🔴 {finding['type'].upper()} (Line {finding['line']})",
+                    f"  {finding['type'].upper()} (Line {finding['line']})",
                     f"    File: {finding['file_path']}",
                     f"    Match: {finding['match']}",
-                    f"    Regulation: {finding['regulation']}",
+                    f"    Category: {finding['regulation']}",
                     f"    Recommendation: {finding['recommendation']}",
                     ""
                 ])
         else:
-            report_lines.append("  ✅ No critical findings")
+            report_lines.append("  No critical findings")
         
         # High severity findings
-        report_lines.extend(["⚠️  HIGH SEVERITY FINDINGS:", ""])
+        report_lines.extend(["HIGH SEVERITY FINDINGS:", ""])
         
         high_findings = [f for f in findings if f['severity'] == 'HIGH']
         if high_findings:
             for finding in high_findings[:10]:  # Limit to first 10
                 report_lines.extend([
-                    f"  🟠 {finding['type'].upper()} (Line {finding['line']})",
+                    f"  {finding['type'].upper()} (Line {finding['line']})",
                     f"    File: {finding['file_path']}",
                     f"    Match: {finding['match']}",
-                    f"    Regulation: {finding['regulation']}",
+                    f"    Category: {finding['regulation']}",
                     ""
                 ])
         else:
-            report_lines.append("  ✅ No high severity findings")
+            report_lines.append("  No high severity findings")
         
         # Compliance recommendations
         report_lines.extend([
-            "💡 COMPLIANCE RECOMMENDATIONS:",
+            "RECOMMENDATIONS:",
             "  1. Review and remove all PII/PHI from source code",
             "  2. Move sensitive data to environment variables or secure storage",
             "  3. Implement data masking for development/testing environments",
             "  4. Add PII detection to CI/CD pipeline",
-            "  5. Create data processing register for GDPR compliance",
+            "  5. Track formal privacy/security requirements outside this tool",
             "  6. Implement data retention policies",
             ""
         ])
@@ -377,6 +422,32 @@ class PIIDetector:
             redacted = redacted[:200] + "..."
         
         return redacted.strip()
+
+    def _format_match(self, match: str) -> str:
+        if self.expose_raw:
+            return match[:50] + "..." if len(match) > 50 else match
+        if len(match) <= 4:
+            return "[REDACTED]"
+        return f"[REDACTED:{len(match)} chars]"
+
+    @staticmethod
+    def _fingerprint(match: str) -> str:
+        return hashlib.sha256(match.encode("utf-8")).hexdigest()[:12]
+
+    @staticmethod
+    def _passes_luhn(value: str) -> bool:
+        digits = [int(char) for char in re.sub(r"\D", "", value)]
+        if len(digits) < 13 or len(digits) > 19:
+            return False
+        checksum = 0
+        parity = len(digits) % 2
+        for index, digit in enumerate(digits):
+            if index % 2 == parity:
+                digit *= 2
+                if digit > 9:
+                    digit -= 9
+            checksum += digit
+        return checksum % 10 == 0
     
     def _get_recommendation(self, pii_type: str, regulation: str) -> str:
         """Get recommendation for PII type."""
@@ -384,17 +455,21 @@ class PIIDetector:
             'email': f"Remove email address. Use environment variables or configuration files for {regulation} compliance.",
             'ssn': f"Remove Social Security Number immediately. {regulation} requires strict protection of this data.",
             'phone': f"Remove phone number. Use secure contact management for {regulation} compliance.",
-            'credit_card': f"Remove credit card data immediately. PCI-DSS compliance required.",
+            'credit_card': "Remove credit card-like data immediately and review PCI-DSS handling requirements.",
             'ip_address': f"Consider if IP address logging is necessary for {regulation} compliance.",
             'date_of_birth': f"Remove date of birth. Use secure user profile management for {regulation} compliance.",
             'address': f"Remove address. Use secure address management for {regulation} compliance.",
             'passport': f"Remove passport number. {regulation} requires strict protection of identity documents.",
             'driver_license': f"Remove driver license number. {regulation} requires strict protection.",
-            'medical_record': f"Remove medical record number. HIPAA compliance required.",
-            'diagnosis_code': f"Remove diagnosis code. HIPAA compliance required.",
-            'patient_id': f"Remove patient ID. HIPAA compliance required.",
-            'medical_procedure': f"Remove medical procedure code. HIPAA compliance required.",
-            'health_insurance': f"Remove health insurance number. HIPAA compliance required."
+            'medical_record': "Remove medical record-like data and review HIPAA handling requirements.",
+            'diagnosis_code': "Remove diagnosis-code-like data and review HIPAA handling requirements.",
+            'patient_id': "Remove patient ID-like data and review HIPAA handling requirements.",
+            'medical_procedure': "Remove procedure-code-like data and review HIPAA handling requirements.",
+            'health_insurance': "Remove health-insurance-like data and review HIPAA handling requirements.",
+            'aws_access_key': "Remove AWS access keys and rotate the credential if it is real.",
+            'api_key': "Remove hardcoded API keys or tokens and use a secret manager.",
+            'jwt': "Remove JWT-like tokens and rotate them if they are real.",
+            'private_key': "Remove private keys from source and rotate dependent credentials."
         }
         
         return recommendations.get(pii_type, f"Remove sensitive data for {regulation} compliance.")

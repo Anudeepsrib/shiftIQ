@@ -84,6 +84,8 @@ class MigratorRegistry:
 
             for ep in group:
                 try:
+                    if ep.name in self._migrators:
+                        continue
                     migrator_cls = ep.load()
                     migrator = migrator_cls() if isinstance(migrator_cls, type) else migrator_cls
                     self.register(

@@ -7,6 +7,10 @@ security:
   audit_logging: true
   max_file_size_kb: 5000
   rate_limit_per_minute: 60
+  allowed_roots:
+    - "."
+  max_files: 5000
+  expose_raw_findings: false
 
 analysis:
   # The formula used by the Confidence engine to score a codebase
@@ -22,11 +26,13 @@ analysis:
   timeout_seconds: 300
 
 server:
+  environment: development
   host: "127.0.0.1"
   port: 8000
   cors_origins:
-    - "*"
-    - "http://localhost:5173"  # Vite dev server
+    - "http://localhost:5173"
+    - "http://127.0.0.1:5173"
+  docs_enabled: false
 
 observability:
   log_level: "INFO"

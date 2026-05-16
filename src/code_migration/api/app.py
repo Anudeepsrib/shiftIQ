@@ -1,69 +1,106 @@
 from pathlib import Path
-from fastapi import FastAPI, Depends
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from code_migration.config import settings
+from code_migration.api.deps import get_registry
 from code_migration.api.errors import (
-    APIError, api_error_handler,
-    SecurityError, security_error_handler,
-    global_exception_handler
+    APIError,
+    api_error_handler,
+    global_exception_handler,
+    http_exception_handler,
+    SecurityError,
+    security_error_handler,
 )
 from code_migration.api.auth import verify_api_key
 from code_migration.api.v1.router import router as v1_router
-from code_migration.api.deps import get_registry
+
+
+def _docs_url(path: str) -> str | None:
+    if settings.server.docs_enabled and not settings.is_production:
+        return path
+    if settings.server.docs_enabled and settings.is_production:
+        return path
+    return None
+
 
 def create_app() -> FastAPI:
-    """Factory function to create the FastAPI application."""
-    
+    """Create the FastAPI application."""
+    allow_credentials = "*" not in settings.server.cors_origins
+
     app = FastAPI(
-        title="Code Migration Assistant API",
-        version="1.0.0",
-        description="Enterprise Code Migration API with Plugin Support"
+        title="ShiftIQ API",
+        version="0.1.0",
+        description="Local-first code migration assistant API",
+        docs_url=_docs_url("/docs"),
+        redoc_url=_docs_url("/redoc"),
+        openapi_url=_docs_url("/openapi.json"),
     )
 
-    # Add Middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.server.cors_origins,
-        allow_credentials=True,
+        allow_credentials=allow_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    # Register Exception Handlers
     app.add_exception_handler(APIError, api_error_handler)
     app.add_exception_handler(SecurityError, security_error_handler)
+    app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(Exception, global_exception_handler)
 
-    # Include V1 API Router with Authentication Dependency
     app.include_router(
         v1_router,
         prefix="/api/v1",
-        tags=["V1 API"],
-        dependencies=[Depends(verify_api_key)]
+        tags=["API v1"],
+        dependencies=[Depends(verify_api_key)],
     )
 
-    # Add general health check without auth
     @app.get("/healthz", tags=["System"])
-    async def healthz(registry = Depends(get_registry)):
-        """Health check endpoint for load balancers."""
-        return {"status": "ok", "migrators": registry.names()}
+    async def healthz(registry=Depends(get_registry)):
+        """Health check without secrets, paths, or environment dumps."""
+        return {
+            "status": "ok",
+            "service": "shiftiq",
+            "migrator_count": len(registry.names()),
+        }
 
-    # Also map the old /api endpoints temporarily if needed for UI compatibility
-    # But for a proper hard-cutover as requested, we only mount /api/v1
-    # We will mount the static UI at the root
-    
-    static_dir = Path(__file__).parent.parent.parent.parent / "ui" / "dist"
+    @app.get("/api/healthz", include_in_schema=False)
+    async def api_healthz():
+        return JSONResponse({"status": "ok"})
+
+    repo_root = Path(__file__).resolve().parents[3]
+    static_dir = repo_root / "ui" / "dist"
     if static_dir.exists():
         app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
     else:
         @app.get("/")
         async def index():
-            return HTMLResponse("UI Not Built. Run 'npm install && npm run build' in the /ui directory.")
+            return HTMLResponse(
+                """
+                <!doctype html>
+                <html lang="en">
+                  <head>
+                    <meta charset="utf-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1" />
+                    <title>ShiftIQ API</title>
+                  </head>
+                  <body>
+                    <main>
+                      <h1>ShiftIQ API is running</h1>
+                      <p>The React UI has not been built yet. Run <code>cd ui && npm install && npm run build</code>.</p>
+                    </main>
+                  </body>
+                </html>
+                """,
+                status_code=200,
+            )
 
     return app
 
-# The instance uvicorn looks for
+
 app = create_app()

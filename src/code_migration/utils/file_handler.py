@@ -30,14 +30,17 @@ def safe_write_file(path: str, content: str, base_dir: Optional[str] = None) -> 
     Verifies path security before writing.
     """
     try:
+        raw_path = Path(path)
+        if raw_path.is_symlink():
+            raise SecurityError("Refusing to overwrite symlink targets")
         file_path = validate_path(path, base_dir)
     except SecurityError as e:
-        logger.error(f"Security violation during write: {e}")
+        logger.error("Security violation during write: %s", e)
         raise
 
     # Create backup
     # Check if we should backup (could be config driven, passing simplified logic for now)
-    backup_dir = file_path.parent / ".migration-backups" # Default local backup
+    backup_dir = file_path.parent / ".migration-backups"
     create_backup(file_path, backup_dir)
 
     # Atomic write: write to temp -> fsync -> rename
@@ -46,14 +49,20 @@ def safe_write_file(path: str, content: str, base_dir: Optional[str] = None) -> 
     
     tmp_name = None
     try:
-        with tempfile.NamedTemporaryFile('w', dir=dir_name, delete=False, encoding='utf-8') as tmp_file:
+        with tempfile.NamedTemporaryFile("w", dir=dir_name, delete=False, encoding="utf-8", newline="") as tmp_file:
             tmp_file.write(content)
             tmp_file.flush()
             os.fsync(tmp_file.fileno())
             tmp_name = tmp_file.name
 
+        if file_path.exists():
+            try:
+                shutil.copystat(file_path, tmp_name)
+            except OSError:
+                pass
+
         os.replace(tmp_name, file_path)
-        logger.info(f"Successfully wrote to {file_path}")
+        logger.info("Successfully wrote to %s", file_path)
     except (OSError, IOError) as e:
         logger.error(f"Failed to write file {file_path}: {e}")
         if tmp_name and os.path.exists(tmp_name):
@@ -65,12 +74,18 @@ def safe_read_file(path: str, base_dir: Optional[str] = None) -> str:
     Safely read file content.
     """
     try:
+        raw_path = Path(path)
+        if raw_path.is_symlink():
+            raise SecurityError("Refusing to read symlink targets")
         file_path = validate_path(path, base_dir)
         if not file_path.exists():
              raise FileNotFoundError(f"File not found: {path}")
-        
-        with open(file_path, 'r', encoding='utf-8') as f:
+
+        if not file_path.is_file():
+            raise SecurityError(f"Path is not a regular file: {path}")
+
+        with open(file_path, "r", encoding="utf-8", errors="strict", newline="") as f:
             return f.read()
     except SecurityError as e:
-        logger.error(f"Security violation during read: {e}")
+        logger.error("Security violation during read: %s", e)
         raise

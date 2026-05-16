@@ -31,11 +31,11 @@ class ReactHooksMigrator(BaseMigrator):
         match = class_regex.search(content)
         
         if not match:
-            logger.debug(f"No class component found in {file_path}")
+            logger.debug("No class component found in %s", file_path.name)
             return content
 
         component_name = match.group(1)
-        logger.info(f"Migrating component: {component_name} in {file_path}")
+        logger.info("Migrating component: %s in %s", component_name, file_path.name)
 
         # 2. Extract render method
         # This is a naive regex for POC. Production would use tree-sitter or babel.

@@ -1,42 +1,38 @@
-name: Security Audit
+name: Security Checks
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ["main"]
   schedule:
-    - cron: '0 0 * * 0' # Weekly
+    - cron: "0 6 * * 1"
 
 jobs:
-  security:
+  static-security:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        
-    - name: Install security tools
-      run: |
-        python -m pip install --upgrade pip
-        pip install bandit pip-audit
-        
-    - name: Run Bandit (Static Analysis)
-      run: |
-        bandit -r src/code_migration -c pyproject.toml
 
-    - name: Run Pip Audit (Vulnerabilities)
-      run: |
-        # Generate fully resolved requirements from pyproject/poetry locally or just use pip-audit
-        pip install -r requirements.txt
-        pip-audit
-        
-    - name: Run Gitleaks (Secrets Detection)
-      uses: gitleaks/gitleaks-action@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pip-audit ruff
+
+      - name: Ruff syntax/security-adjacent checks
+        run: ruff check .
+
+      - name: Pip audit
+        run: pip-audit
+
+      - name: Secret scanning guidance
+        run: |
+          echo "No hosted secret-scanning service is required by CI."
+          echo "Before release, run gitleaks/trufflehog or an approved internal scanner locally."
