@@ -430,6 +430,7 @@ ui/                           React/Vite local interface
 - [Fleet integration overview](docs/fleet/README.md)
 - [Fleet architecture](docs/fleet/architecture.md)
 - [Fleet quickstart](docs/fleet/quickstart.md)
+- [Fleet feature guide](docs/fleet/feature-guide.html) — educational walkthrough of all Fleet capabilities through a ShiftIQ scenario
 - [Remote MCP](docs/fleet/remote-mcp.md)
 - [Agent setup](docs/fleet/agent-setup.md)
 - [Approvals](docs/fleet/approvals.md)

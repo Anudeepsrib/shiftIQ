@@ -6,4 +6,4 @@ Implemented in this repository: authenticated Streamable HTTP MCP, workspace IDs
 
 Fleet-managed configuration: agent creation, tool Ask/Auto modes, sub-agent tool assignment, memory approvals, identity, integrations, GitHub/Slack/Teams connections, schedules, sharing, RBAC/ABAC, workspace secrets, model tier, spend controls, and self-hosting entitlement.
 
-Start with [quickstart](quickstart.md), then follow [agent setup](agent-setup.md). The [feature matrix](feature-matrix.md) is the source of truth for implementation status.
+Start with the [educational feature guide](feature-guide.html), continue with the [quickstart](quickstart.md), then follow [agent setup](agent-setup.md). The [feature matrix](feature-matrix.md) is the source of truth for implementation status.
