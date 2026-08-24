@@ -10,8 +10,12 @@ from mcp.server.fastmcp import FastMCP
 from code_migration.operations import (
     analyze_project,
     compliance_scan as run_compliance_scan,
+    get_checkpoint as get_checkpoint_operation,
+    list_checkpoints as list_checkpoints_operation,
+    plan_migration as plan_migration_operation,
     rollback_checkpoint,
     run_migration as run_migration_operation,
+    verify_migration as verify_migration_operation,
     visualize_project,
 )
 from code_migration.registry import create_registry
@@ -95,6 +99,30 @@ def compliance_scan(path: str, include_raw: bool = False) -> str:
 def visualize(path: str) -> str:
     """Return dependency graph statistics and migration waves."""
     return _safe_json(visualize_project, path)
+
+
+@mcp.tool()
+def plan_migration(path: str, migration_type: str = "react-hooks") -> str:
+    """Build a static candidate, risk, and dependency-wave plan."""
+    return _safe_json(plan_migration_operation, path, migration_type=migration_type)
+
+
+@mcp.tool()
+def verify_migration(path: str, migration_type: str = "react-hooks") -> str:
+    """Statically verify whether supported source-pattern candidates remain."""
+    return _safe_json(verify_migration_operation, path, migration_type=migration_type)
+
+
+@mcp.tool()
+def list_checkpoints(path: str) -> str:
+    """List rollback checkpoints for a local project path."""
+    return _safe_json(list_checkpoints_operation, path)
+
+
+@mcp.tool()
+def get_checkpoint(path: str, checkpoint_id: str) -> str:
+    """Return local rollback checkpoint metadata."""
+    return _safe_json(get_checkpoint_operation, path, checkpoint_id)
 
 
 @mcp.tool()

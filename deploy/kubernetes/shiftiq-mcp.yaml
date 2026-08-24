@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shiftiq-workspaces
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shiftiq-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shiftiq-mcp
+  template:
+    metadata:
+      labels:
+        app: shiftiq-mcp
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mcp
+          image: your-registry/shiftiq:0.1.0
+          args: ["python", "-m", "code_migration.mcp_remote"]
+          ports:
+            - name: http
+              containerPort: 8001
+          env:
+            - name: SHIFTIQ_REMOTE_MCP_ENABLED
+              value: "true"
+            - name: SHIFTIQ_REMOTE_MCP_HOST
+              value: "0.0.0.0"
+            - name: SHIFTIQ_WORKSPACE_ROOT
+              value: /data/shiftiq/workspaces
+            - name: SHIFTIQ_MCP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: shiftiq-mcp
+                  key: api-key
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: workspaces
+              mountPath: /data/shiftiq/workspaces
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: workspaces
+          persistentVolumeClaim:
+            claimName: shiftiq-workspaces
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shiftiq-mcp
+spec:
+  selector:
+    app: shiftiq-mcp
+  ports:
+    - name: https
+      port: 443
+      targetPort: http

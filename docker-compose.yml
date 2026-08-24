@@ -37,6 +37,57 @@ services:
       retries: 3
       start_period: 10s
 
+  mcp:
+    profiles: ["fleet"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: shiftiq-api:local
+    restart: unless-stopped
+    read_only: true
+    command: ["python", "-m", "code_migration.mcp_remote"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      SHIFTIQ_REMOTE_MCP_ENABLED: "true"
+      SHIFTIQ_REMOTE_MCP_HOST: 0.0.0.0
+      SHIFTIQ_REMOTE_MCP_PORT: 8001
+      SHIFTIQ_REMOTE_MCP_PATH: /mcp
+      SHIFTIQ_REMOTE_MCP_AUTH_ENABLED: "true"
+      SHIFTIQ_MCP_API_KEY: ${SHIFTIQ_MCP_API_KEY:-}
+      SHIFTIQ_WORKSPACE_ROOT: /data/shiftiq/workspaces
+      SHIFTIQ_WORKSPACE_TTL_SECONDS: ${SHIFTIQ_WORKSPACE_TTL_SECONDS:-86400}
+      SHIFTIQ_WORKSPACE_MAX_MB: ${SHIFTIQ_WORKSPACE_MAX_MB:-512}
+      SHIFTIQ_REMOTE_RATE_LIMIT_PER_MINUTE: ${SHIFTIQ_REMOTE_RATE_LIMIT_PER_MINUTE:-60}
+      SHIFTIQ_GITHUB_TOKEN: ${SHIFTIQ_GITHUB_TOKEN:-}
+    ports:
+      - "8001:8001"
+    volumes:
+      - shiftiq_workspaces:/data/shiftiq/workspaces:rw
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/readyz', timeout=3).read()"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
 volumes:
   shiftiq_logs:
   shiftiq_checkpoints:
+  shiftiq_workspaces:

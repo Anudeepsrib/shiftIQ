@@ -51,6 +51,7 @@ safety-report.json
 .migration-backups/
 .migration-logs/
 .migration-checkpoints/
+.shiftiq-workspaces/
 migration-report.md
 
 # Temporary files

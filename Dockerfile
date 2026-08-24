@@ -25,8 +25,8 @@ RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements.txt \
     && python -m pip install .
 
-RUN mkdir -p /data/projects /app/.migration-logs /app/.migration-checkpoints \
-    && chown -R app:app /app /data/projects
+RUN mkdir -p /data/projects /data/shiftiq/workspaces /app/.migration-logs /app/.migration-checkpoints \
+    && chown -R app:app /app /data/projects /data/shiftiq
 
 USER app
 
@@ -37,7 +37,7 @@ ENV MIGRATION_SERVER__ENVIRONMENT=development \
     MIGRATION_SECURITY__ALLOWED_ROOTS='["/data/projects"]' \
     MIGRATION_OBSERVABILITY__LOG_FORMAT=json
 
-EXPOSE 8000
+EXPOSE 8000 8001
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).read()"

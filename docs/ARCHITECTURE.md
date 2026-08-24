@@ -9,6 +9,9 @@ graph TD
     CLI[Typer CLI / Console] --> Core[Migration Core]
     API[FastAPI v1 Router] --> Core
     MCP[MCP Server] --> Core
+    Fleet[LangSmith Fleet] --> RemoteMCP[Authenticated Remote MCP]
+    RemoteMCP --> Workspace[Managed Workspaces]
+    Workspace --> Core
     Web[React + Vite UI] --> API
     
     subgraph Core [Core Orchestration Layer]
@@ -48,12 +51,12 @@ This unified state replaces distributed hardcoded constraints throughout the app
 ## 3. Compliance and Security 
 No arbitrary code is ever `eval()`'d or executed.
 - **`code_sandbox.py`**: Ensures files do not exceed sizes, line counts, or cyclomatic limits via standard library AST parsing.
-- **`audit_logger.py`**: Binds to `structlog` to emit standard JSON but explicitly manages its own 50MB rotating file append log (`security_audit.jsonl`) for SOC2/GDPR adherence without affecting user console noise.
+- **`audit_logger.py`**: Emits structured security events that can support organizational audit controls; it does not confer compliance certification.
 - **`pii_detector.py` / `anonymizer.py`**: Ensures pre-flight and post-flight sanitization of user strings.
 
 ## 4. API Layer (FastAPI)
 Located at `src/code_migration/api/`:
-- **`v1/router.py`**: Serves streaming Server-Sent Events (SSE) for heavy code modification tasks.
+- **`v1/router.py`**: Exposes authenticated analysis, migration, compliance-scan, visualization, rollback, and migrator routes.
 - **`auth.py`**: Defies `X-API-Key` intercept layer bound to `config.settings`.
 - **`schemas.py`**: Pydantic models force OpenAPI documentation consistency.
 - **`errors.py`**: Traps exceptions natively, transforming standard outputs to JSON representations like `{"error": {"code": "SECURITY_VIOLATION", "message": "..."}}`.

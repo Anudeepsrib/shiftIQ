@@ -42,13 +42,20 @@ def _is_relative_to(path: Path, base: Path) -> bool:
         return False
 
 
-def resolve_workspace_path(path: str, *, must_exist: bool = True) -> Path:
+def resolve_workspace_path(
+    path: str,
+    *,
+    must_exist: bool = True,
+    trusted_root: Optional[Path] = None,
+) -> Path:
     """Resolve a user path under one of the configured allowed roots."""
     if not path or len(path) > 4096:
         raise SecurityError("Invalid path length")
 
     raw = Path(path).expanduser()
     roots = settings.resolved_allowed_roots()
+    if trusted_root is not None:
+        roots.append(trusted_root.resolve())
 
     for root in roots:
         candidate = raw if raw.is_absolute() else root / raw
@@ -101,8 +108,14 @@ def _relative(path: Path, root: Path) -> str:
         return path.name
 
 
-def analyze_project(path: str, migration_type: str = "react-hooks", *, include_confidence: bool = False) -> Dict[str, Any]:
-    target = resolve_workspace_path(path)
+def analyze_project(
+    path: str,
+    migration_type: str = "react-hooks",
+    *,
+    include_confidence: bool = False,
+    trusted_root: Optional[Path] = None,
+) -> Dict[str, Any]:
+    target = resolve_workspace_path(path, trusted_root=trusted_root)
     root = project_root_for(target)
     registry = create_registry()
     migrator = registry.get(migration_type)
@@ -140,8 +153,14 @@ def analyze_project(path: str, migration_type: str = "react-hooks", *, include_c
     return result
 
 
-def run_migration(path: str, migration_type: str = "react-hooks", *, dry_run: bool = True) -> Dict[str, Any]:
-    target = resolve_workspace_path(path)
+def run_migration(
+    path: str,
+    migration_type: str = "react-hooks",
+    *,
+    dry_run: bool = True,
+    trusted_root: Optional[Path] = None,
+) -> Dict[str, Any]:
+    target = resolve_workspace_path(path, trusted_root=trusted_root)
     root = project_root_for(target)
     registry = create_registry()
     migrator = registry.get(migration_type)
@@ -202,17 +221,22 @@ def run_migration(path: str, migration_type: str = "react-hooks", *, dry_run: bo
     }
 
 
-def compliance_scan(path: str, *, include_raw: bool = False) -> Dict[str, Any]:
+def compliance_scan(
+    path: str,
+    *,
+    include_raw: bool = False,
+    trusted_root: Optional[Path] = None,
+) -> Dict[str, Any]:
     from code_migration.core.compliance import PIIDetector
 
-    target = resolve_workspace_path(path)
+    target = resolve_workspace_path(path, trusted_root=trusted_root)
     root = project_root_for(target)
     with PIIDetector(root, expose_raw=include_raw) as detector:
         return detector.scan_directory()
 
 
-def visualize_project(path: str) -> Dict[str, Any]:
-    target = resolve_workspace_path(path)
+def visualize_project(path: str, *, trusted_root: Optional[Path] = None) -> Dict[str, Any]:
+    target = resolve_workspace_path(path, trusted_root=trusted_root)
     root = project_root_for(target)
     planner = VisualMigrationPlanner(root, allowed_base=root)
     planner.build_dependency_graph()
@@ -225,8 +249,73 @@ def visualize_project(path: str) -> Dict[str, Any]:
     }
 
 
-def rollback_checkpoint(path: str, checkpoint_id: str, *, dry_run: bool = False) -> Dict[str, Any]:
-    target = resolve_workspace_path(path)
+def rollback_checkpoint(
+    path: str,
+    checkpoint_id: str,
+    *,
+    dry_run: bool = False,
+    trusted_root: Optional[Path] = None,
+) -> Dict[str, Any]:
+    target = resolve_workspace_path(path, trusted_root=trusted_root)
     root = project_root_for(target)
     with TimeMachineRollback(root, allowed_base=root) as rollback:
         return rollback.rollback(checkpoint_id, dry_run=dry_run)
+
+
+def list_checkpoints(path: str, *, trusted_root: Optional[Path] = None) -> List[Dict[str, Any]]:
+    target = resolve_workspace_path(path, trusted_root=trusted_root)
+    root = project_root_for(target)
+    with TimeMachineRollback(root, allowed_base=root) as rollback:
+        return rollback.list_checkpoints()
+
+
+def get_checkpoint(
+    path: str,
+    checkpoint_id: str,
+    *,
+    trusted_root: Optional[Path] = None,
+) -> Optional[Dict[str, Any]]:
+    target = resolve_workspace_path(path, trusted_root=trusted_root)
+    root = project_root_for(target)
+    with TimeMachineRollback(root, allowed_base=root) as rollback:
+        return rollback.get_checkpoint_details(checkpoint_id)
+
+
+def plan_migration(
+    path: str,
+    migration_type: str = "react-hooks",
+    *,
+    trusted_root: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Build a deterministic candidate and dependency-wave plan."""
+    analysis = analyze_project(path, migration_type, include_confidence=True, trusted_root=trusted_root)
+    graph = visualize_project(path, trusted_root=trusted_root)
+    return {
+        "migration_type": migration_type,
+        "total_candidates": analysis["total_candidates"],
+        "candidates": analysis["candidates"],
+        "confidence": analysis.get("confidence"),
+        "migration_waves": graph["migration_waves"],
+        "graph": {
+            "total_nodes": graph["total_nodes"],
+            "total_edges": graph["total_edges"],
+        },
+    }
+
+
+def verify_migration(
+    path: str,
+    migration_type: str = "react-hooks",
+    *,
+    trusted_root: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Statically verify that rerunning the deterministic transform is a no-op."""
+    preview = run_migration(path, migration_type, dry_run=True, trusted_root=trusted_root)
+    remaining = [item["file"] for item in preview["results"] if item.get("changed")]
+    return {
+        "migration_type": migration_type,
+        "verification": "passed" if not remaining else "failed",
+        "remaining_candidates": remaining,
+        "remaining_count": len(remaining),
+        "execution_performed": False,
+    }
