@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing! This guide covers everything you need to get started — from environment setup to pull request submission.
 
-> **Related docs:** [README](README.md) · [User Guide](docs/USER_GUIDE.md) · [Installation Guide](docs/INSTALLATION.md) · [Security Policy](docs/security/SECURITY.md)
+> **Related docs:** [README](README.md) · [User Guide](docs/getting-started/user-guide.md) · [Installation Guide](docs/getting-started/installation.md) · [Security Policy](docs/security/SECURITY.md)
 
 ---
 
@@ -354,11 +354,11 @@ When adding or modifying features, update the relevant documentation:
 
 | Change Type | Update Required |
 |-------------|----------------|
-| New CLI command | [User Guide](docs/USER_GUIDE.md) command reference |
-| New core module | [README](README.md) architecture table, [User Guide](docs/USER_GUIDE.md) |
+| New CLI command | [User Guide](docs/getting-started/user-guide.md) command reference |
+| New core module | [README](README.md) architecture table, [User Guide](docs/getting-started/user-guide.md) |
 | Security change | [Security Policy](docs/security/SECURITY.md) |
-| New dependency | [Installation Guide](docs/INSTALLATION.md) |
-| Configuration change | [User Guide](docs/USER_GUIDE.md) configuration section |
+| New dependency | [Installation Guide](docs/getting-started/installation.md) |
+| Configuration change | [User Guide](docs/getting-started/user-guide.md) configuration section |
 
 ### Documentation Standards
 

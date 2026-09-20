@@ -2,7 +2,7 @@
 
 > Step-by-step setup for the **Code Migration Assistant** on all major platforms.
 >
-> After installation, see the [User Guide](USER_GUIDE.md) for usage instructions and the [Security Policy](security/SECURITY.md) for security configuration.
+> After installation, see the [User Guide](user-guide.md) for usage instructions and the [Security Policy](../security/SECURITY.md) for security configuration.
 
 ---
 
@@ -218,7 +218,7 @@ MIGRATION_LOG_LEVEL="INFO"           # DEBUG | INFO | WARNING | ERROR
 
 ### Configuration Files
 
-After installation, you can create optional YAML configuration files. See the [User Guide — Configuration](USER_GUIDE.md#configuration) for full details on:
+After installation, you can create optional YAML configuration files. See the [User Guide — Configuration](user-guide.md#configuration) for full details on:
 
 - `config/security_policy.yaml` — input validation, path sanitization, rate limiting
 - `config/compliance_rules.yaml` — GDPR, HIPAA, SOC2 settings
@@ -351,6 +351,6 @@ pytest -m "not slow"
 | Document | Description |
 |----------|-------------|
 | [README](../../README.md) | Project overview, architecture, and quick reference |
-| [User Guide](USER_GUIDE.md) | Complete usage documentation with examples |
-| [Security Policy](security/SECURITY.md) | Security architecture, threat model, compliance |
+| [User Guide](user-guide.md) | Complete usage documentation with examples |
+| [Security Policy](../security/SECURITY.md) | Security architecture, threat model, compliance |
 | [Contributing Guide](../../CONTRIBUTING.md) | Development workflow, coding standards, PR process |

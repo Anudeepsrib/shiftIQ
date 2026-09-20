@@ -45,7 +45,7 @@ This document tabulates the features that are fully implemented and present in t
 | Feature Name | Description | Source Module |
 |---|---|---|
 | **FastAPI REST Server** | Modular Application Programming Interface equipped with `v1` routers, API key interception, streaming SSE, and OpenAPI typing. | `src/code_migration/api/` |
-| **Unified Configuration Engine** | Pydantic `BaseSettings` cascading inheritance from `config.defaults.yaml`, overridable by environment variables. | `src/code_migration/config.py` |
+| **Unified Configuration Engine** | Pydantic `BaseSettings` cascading inheritance from `config/defaults.yaml`, overridable by environment variables. | `src/code_migration/config.py` |
 | **Docker Containerization** | Multi-stage Dockerfile packing the Python backend and React Vite UI into a highly constrained, prod-ready bundle. | `Dockerfile`, `docker-compose.yml` |
 | **OpenTelemetry Integration** | Traces critical execution paths to remote OTLP collectors. | `src/code_migration/telemetry.py` |
 | **CI/CD Validation** | Matrix automated testing covering security pipelines (`bandit`, `pip-audit`), semantic releases, and Python cross-platform verification. | `.github/workflows/` |

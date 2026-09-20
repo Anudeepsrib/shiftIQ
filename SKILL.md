@@ -12,7 +12,7 @@ license: Apache-2.0
 
 # Code Migration Assistant
 
-> For full documentation, see the [README](README.md), [User Guide](docs/USER_GUIDE.md), and [Installation Guide](docs/INSTALLATION.md).
+> For full documentation, see the [README](README.md), [User Guide](docs/getting-started/user-guide.md), and [Installation Guide](docs/getting-started/installation.md).
 
 ## When to Use This Skill
 

@@ -2,7 +2,7 @@
 
 > **Code Migration Assistant** — Enterprise-grade, security-first code migration with AI-powered analysis.
 >
-> This guide covers everything from your first migration to advanced production deployments. For installation, see the [Installation Guide](INSTALLATION.md). For security details, see the [Security Policy](security/SECURITY.md).
+> This guide covers everything from your first migration to advanced production deployments. For installation, see the [Installation Guide](installation.md). For security details, see the [Security Policy](../security/SECURITY.md).
 
 ---
 
@@ -30,7 +30,7 @@
 | RAM | 8 GB+ | Recommended for large codebases |
 
 > [!TIP]
-> See the [Installation Guide](INSTALLATION.md) for detailed platform-specific setup instructions.
+> See the [Installation Guide](installation.md) for detailed platform-specific setup instructions.
 
 ### Install
 
@@ -409,7 +409,7 @@ Features:
 
 ### Compliance Scanning
 
-Enterprise compliance for regulated industries. See the [Security Policy](docs/security/SECURITY.md) for the full compliance framework.
+Enterprise compliance for regulated industries. See the [Security Policy](../security/SECURITY.md) for the full compliance framework.
 
 ```bash
 # Full compliance scan
@@ -574,7 +574,7 @@ MIGRATION_SECURITY_LEVEL=medium migrate run ./project --type react-hooks
 ```
 
 > [!WARNING]
-> Lowering the security level bypasses important safety checks. Only do this if you understand the risk. See the [Security Policy](security/SECURITY.md) for details on each control.
+> Lowering the security level bypasses important safety checks. Only do this if you understand the risk. See the [Security Policy](../security/SECURITY.md) for details on each control.
 
 ### Memory Issues with Large Projects
 
@@ -682,7 +682,7 @@ tail -f .migration-logs/security_audit.jsonl
 - Run compliance scans regularly, not just during migrations
 - Monitor audit logs for suspicious activity
 - Keep dependencies up to date
-- See the full [Security Policy](security/SECURITY.md) for detailed controls
+- See the full [Security Policy](../security/SECURITY.md) for detailed controls
 
 ---
 
@@ -691,8 +691,8 @@ tail -f .migration-logs/security_audit.jsonl
 | Document | Description |
 |----------|-------------|
 | [README](../../README.md) | Project overview and quick reference |
-| [Installation Guide](INSTALLATION.md) | Platform-specific setup instructions |
-| [Security Policy](security/SECURITY.md) | Security architecture, threat model, compliance |
+| [Installation Guide](installation.md) | Platform-specific setup instructions |
+| [Security Policy](../security/SECURITY.md) | Security architecture, threat model, compliance |
 | [Contributing Guide](../../CONTRIBUTING.md) | Development setup, coding standards, PR process |
 
 ---

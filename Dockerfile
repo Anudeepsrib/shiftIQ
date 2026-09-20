@@ -17,7 +17,8 @@ WORKDIR /app
 
 RUN addgroup --system app && adduser --system --ingroup app app
 
-COPY requirements.txt pyproject.toml README.md LICENSE config.defaults.yaml ./
+COPY requirements.txt pyproject.toml README.md LICENSE ./
+COPY config/ ./config/
 COPY src/ ./src/
 COPY --from=ui-builder /app/ui/dist ./ui/dist
 

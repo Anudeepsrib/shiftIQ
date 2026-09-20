@@ -42,7 +42,7 @@ The heart of the application is the `MigratorRegistry` (`src/code_migration/regi
 
 ## 2. Configuration System
 The `code_migration.config` module uses Pydantic's `BaseSettings` for a robust, multi-tier hierarchy:
-1. `config.defaults.yaml` (Base defaults)
+1. `config/defaults.yaml` (Base defaults)
 2. `.env` files (Local developer overrides)
 3. Direct Environment Variables (CI/CD / Production overrides) ex: `MIGRATION_SERVER__PORT`
 

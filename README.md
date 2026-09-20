@@ -351,7 +351,7 @@ ShiftIQ preserves these controls regardless of what an agent requests:
 
 ShiftIQ provides compliance-oriented scanning, sensitive-data detection, and control-supporting auditability. It does **not** automatically make a system GDPR compliant, HIPAA compliant, SOC 2 compliant, or PCI-DSS certified.
 
-Read the [Fleet threat model](docs/fleet/security.md), [core security model](docs/security-model.md), and [migration safety guide](docs/migration-safety.md).
+Read the [Fleet threat model](docs/fleet/security.md), [core security model](docs/reference/security-model.md), and [migration safety guide](docs/guides/migration-safety.md).
 
 ## Observability and audit
 
@@ -401,6 +401,7 @@ The suite covers local safety plus remote MCP discovery/authentication, workspac
 
 ```text
 fleet/                         Fleet agent, sub-agents, skills, schedules, evals
+config/                        Versioned runtime defaults
 src/code_migration/fleet/     Optional Fleet integration and workspace services
 src/code_migration/mcp_remote.py
                                Authenticated Streamable HTTP MCP server
@@ -410,6 +411,9 @@ src/code_migration/operations.py
                                Shared deterministic operations
 src/code_migration/core/      Analysis, security, compliance, rollback, verification
 tests/fleet/                   Fleet gateway and safety tests
+docs/getting-started/          Installation and usage
+docs/guides/                   Task-focused guides
+docs/reference/                Architecture and project reference
 docs/fleet/                    Fleet setup, governance, security, and deployment
 deploy/kubernetes/            Remote MCP Kubernetes example
 ui/                           React/Vite local interface
@@ -427,24 +431,12 @@ ui/                           React/Vite local interface
 
 ## Documentation
 
-- [Fleet integration overview](docs/fleet/README.md)
-- [Fleet architecture](docs/fleet/architecture.md)
-- [Fleet quickstart](docs/fleet/quickstart.md)
-- [Fleet feature guide](docs/fleet/feature-guide.html) — educational walkthrough of all Fleet capabilities through a ShiftIQ scenario
-- [Remote MCP](docs/fleet/remote-mcp.md)
-- [Agent setup](docs/fleet/agent-setup.md)
-- [Approvals](docs/fleet/approvals.md)
-- [Memory policy](docs/fleet/memory.md)
-- [Identity](docs/fleet/identity.md)
-- [GitHub workflow](docs/fleet/github.md)
-- [Channels and schedules](docs/fleet/channels.md)
-- [RBAC and ABAC](docs/fleet/rbac-abac.md)
-- [Deployment](docs/fleet/deployment.md)
-- [Troubleshooting](docs/fleet/troubleshooting.md)
-- [Feature matrix](docs/fleet/feature-matrix.md)
-- [Core MCP usage](docs/mcp-usage.md)
-- [Compliance scanner](docs/compliance-scanner.md)
-- [Audit report](AUDIT_REPORT.md)
+- [Documentation index](docs/README.md)
+- [Installation](docs/getting-started/installation.md)
+- [User guide](docs/getting-started/user-guide.md)
+- [Migration safety](docs/guides/migration-safety.md)
+- [Fleet integration](docs/fleet/README.md)
+- [Audit report](docs/reference/audit-report.md)
 
 ## License
 

@@ -100,7 +100,7 @@ def _load_yaml_config(file_path: Optional[str]) -> dict:
     candidate = file_path
     if not candidate:
         repo_root = Path(__file__).resolve().parents[2]
-        for loc in (repo_root / "config.defaults.yaml", Path("config.defaults.yaml")):
+        for loc in (repo_root / "config" / "defaults.yaml", Path("config/defaults.yaml")):
             if loc.exists():
                 candidate = str(loc)
                 break

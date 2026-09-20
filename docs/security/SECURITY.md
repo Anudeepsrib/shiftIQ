@@ -2,7 +2,7 @@
 
 > Security architecture, threat model, and compliance framework for the **Code Migration Assistant**.
 >
-> For usage instructions, see the [User Guide](../USER_GUIDE.md). For setup, see the [Installation Guide](../INSTALLATION.md). For contributing security improvements, see the [Contributing Guide](../../CONTRIBUTING.md).
+> For usage instructions, see the [User Guide](../getting-started/user-guide.md). For setup, see the [Installation Guide](../getting-started/installation.md). For contributing security improvements, see the [Contributing Guide](../../CONTRIBUTING.md).
 
 ---
 
@@ -374,8 +374,8 @@ If you discover a security vulnerability, please report it responsibly:
 | Document | Description |
 |----------|-------------|
 | [README](../../README.md) | Project overview and architecture |
-| [User Guide](../USER_GUIDE.md) | Complete usage documentation |
-| [Installation Guide](../INSTALLATION.md) | Setup instructions |
+| [User Guide](../getting-started/user-guide.md) | Complete usage documentation |
+| [Installation Guide](../getting-started/installation.md) | Setup instructions |
 | [Contributing Guide](../../CONTRIBUTING.md) | Development workflow and security requirements |
 
 ---

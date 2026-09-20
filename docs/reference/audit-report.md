@@ -34,10 +34,10 @@
 | `.gitignore` | Added `**/` recursive patterns for egg-info, eggs, __pycache__, *.py[cod] to catch subdir artifacts (e.g. src/*.egg-info). |
 | `src/code_migration/telemetry.py:21` | Default service_name: "code-migration-assistant" → "shiftiq" |
 | `src/code_migration/core/compliance/audit_reporter.py` | 4 updates: org name "Code Migration Assistant" → "ShiftIQ" (3×); module docstring + generate_gdpr_report + generate_hipaa_report + generate_soc2_report docstrings expanded with "heuristic ... NOT a formal certification ... not a substitute for legal/security review" disclaimers. |
-| `config.defaults.yaml:1` | Header comment: "Code Migration Assistant" → "ShiftIQ" |
-| `docs/FEATURES.md:1` | Title updated to ShiftIQ |
-| `docs/ARCHITECTURE.md:1,3` | Title + intro sentence ("enterprise-grade" removed, name → ShiftIQ) |
-| `docs/PLUGIN_GUIDE.md` | Title + 2× "code-migration-assistant" → "ShiftIQ" (and repo references) |
+| `config/defaults.yaml:1` | Header comment: "Code Migration Assistant" → "ShiftIQ" |
+| `docs/reference/features.md:1` | Title updated to ShiftIQ |
+| `docs/reference/architecture.md:1,3` | Title + intro sentence ("enterprise-grade" removed, name → ShiftIQ) |
+| `docs/guides/plugin-guide.md` | Title + 2× "code-migration-assistant" → "ShiftIQ" (and repo references) |
 | `CONTRIBUTING.md` | All  "code-migration-assistant" / "anudeepsrib/..." → "shiftIQ" / "Anudeepsrib/shiftIQ" (clone, upstream, links) |
 | `docs/security/SECURITY.md:327` | GitHub advisory URL updated to Anudeepsrib/shiftIQ |
 
@@ -168,7 +168,7 @@ python -m code_migration.cli migrators
 ## 6. Compliance Wording Changed
 
 - **audit_reporter.py**: All three report generators (GDPR/HIPAA/SOC2) + module docstring now state "heuristic", "NOT a formal ... certification", "not a substitute for legal or security review".
-- **docs/compliance-scanner.md**, README, pii_detector.py: Already used "compliance-oriented ... not a formal ... product" — left as-is (defensible).
+- **docs/guides/compliance-scanner.md**, README, pii_detector.py: Already used "compliance-oriented ... not a formal ... product" — left as-is (defensible).
 - **ARCHITECTURE.md**: Removed "enterprise-grade".
 - **Test expectations** (e.g. "GDPR" in report): Still pass because pattern tags remain for utility; disclaimers are in human-facing output.
 
@@ -183,8 +183,8 @@ python -m code_migration.cli migrators
 3. For production Docker: supply `MIGRATION_API_KEY` via secret / env, set explicit `MIGRATION_SERVER__CORS_ORIGINS`, `MIGRATION_SERVER__DOCS_ENABLED=false`.
 4. (Optional) `pip install -r requirements-dev.txt` then `python -m build` + `twine upload` for PyPI release of `shiftiq`.
 5. Run `mcp dev src/code_migration/mcp_server.py` (requires `mcp[cli]`) for local MCP inspector testing.
-6. Review `docs/compliance-scanner.md` + `docs/security-model.md` before any customer-facing claims.
-7. Add real logo/branding assets if desired (public/shiftiq_logo.png exists).
+6. Review `docs/guides/compliance-scanner.md` + `docs/reference/security-model.md` before any customer-facing claims.
+7. Add real logo/branding assets if desired (`docs/assets/shiftiq-logo.png` exists).
 
 ---
 
@@ -215,7 +215,7 @@ audit: make ShiftIQ runnable, secure, and portfolio-ready
 - Verified: python -m compileall, pip install -e ., pytest (106), ruff, CLI/MCP/UI/Docker Compose, local-first tests, API auth, no default external calls, path sanitization
 - All P0/P1 execution + security blockers resolved; wording now defensible for portfolio use
 
-Commands run: see AUDIT_REPORT.md
+Commands run: see `docs/reference/audit-report.md`.
 ```
 
 ---

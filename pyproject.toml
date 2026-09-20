@@ -67,9 +67,31 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.pytest.ini_options]
+minversion = "8.0"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["src"]
+addopts = [
+    "--cov=src/code_migration",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--strict-markers",
+    "--disable-warnings",
+    "--timeout=300",
+    "--tb=short",
+]
+markers = [
+    "security: Security-related tests",
+    "compliance: Compliance scanning tests",
+    "performance: Performance tests",
+    "integration: End-to-end tests",
+    "slow: Tests that take longer to run",
+]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 120
