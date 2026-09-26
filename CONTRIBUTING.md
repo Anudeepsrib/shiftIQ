@@ -226,10 +226,12 @@ def helper():
 ```
 tests/
 ├── compliance/      # PII/PHI detection tests
+├── fixtures/        # Sample projects and test data
+├── fleet/           # Fleet gateway and workspace tests
 ├── integration/     # End-to-end workflow tests
 ├── performance/     # Benchmarks and stress tests
 ├── security/        # Input validation, path traversal tests
-└── __init__.py      # Test configuration
+└── __init__.py      # Package marker
 ```
 
 ### Writing Tests
